@@ -1,81 +1,94 @@
-# DocumentReader - Document AI Agent
+# Roadway-Doc-Engine (DocumentReader)
 
-A specialized Document AI Agent for reading and interpreting difficult documents like photocopied road engineering plans and complex PDFs. This system combines advanced OCR, vision-language models, and layout detection to extract information from low-legibility documents.
+A specialized document processing system designed to parse roadway construction plans (PDFs and CAD exports). This system combines advanced OCR, vision-language models, and layout detection to extract information from engineering documents, with specialized support for INDOT (Indiana Department of Transportation) standard sheet types.
 
 ## 🎯 Core Mission
 
-Reading and interpreting challenging documents including:
-- Photocopied engineering plans
+Processing and interpreting roadway construction documents including:
+- INDOT-standard engineering plans (Title Sheets, Plan & Profile, Cross-Sections)
+- Photocopied road engineering plans  
 - Technical drawings and blueprints
 - Low-legibility scanned documents
 - Complex multi-page PDFs
-- Road engineering specifications
-- Construction documents
 
-## ✨ Features
+## ✨ Key Features
 
-### Advanced OCR
-- **Tesseract OCR**: High-quality open-source OCR with customizable parameters
-- **PaddleOCR**: State-of-the-art multilingual OCR particularly effective for low-quality documents
-- Image preprocessing for enhanced OCR accuracy (contrast enhancement, denoising, deskewing)
+### 🔍 Specialized Document Processing
+- **INDOT Sheet Type Identification**: Automatically identifies standard INDOT sheet types (Title Sheet, Plan & Profile, Cross-Sections, etc.)
+- **Measurement Extraction**: Extracts dimensions, measurements, and annotations from engineering plans
+- **Advanced OCR**: Tesseract and PaddleOCR support for high-quality text extraction
+- **Layout Detection**: Identifies text regions, tables, figures, and document structure
+- **Vision-Language Models**: Optional GPT-4o or Claude integration for semantic understanding
 
-### Vision-Language Models
-- **GPT-4o**: OpenAI's vision model for document interpretation
-- **Claude**: Anthropic's vision model for detailed document analysis
-- Context-aware interpretation combining OCR and visual understanding
+### 🌐 Dual-Interface Architecture
 
-### Layout Detection
-- Automatic detection of text regions, tables, figures, and other document elements
-- Support for multiple layout analysis models (LayoutParser, Detectron2)
-- Structured extraction of document components
+#### REST API (FastAPI)
+- Production-ready API endpoints for document processing
+- Integration-ready for other roadway task tools (quantity takeoff, utility coordination)
+- Supports batch processing and async operations
+- CORS-enabled for web integration
 
-### Specialized Processing
-- Engineering plan processing with measurement and annotation extraction
-- Batch processing capabilities
-- PDF to image conversion
-- Configurable processing pipelines
+#### Web UI (React)
+- Browser-based dashboard for document uploads
+- Drag-and-drop interface
+- Real-time processing status
+- Interactive results display with INDOT sheet information
+
+#### Desktop GUI (PyQt5)
+- Lightweight local application
+- High-speed drag-and-drop processing
+- Offline processing capabilities
+- Results export to JSON or text
+
+### 🤖 Automated Maintenance
+- Weekly GitHub Actions workflow to check for ML model updates
+- Automatic issue creation when new versions are available
+- Tracks updates for LayoutLMv3, PaddleOCR, Tesseract, and related models
 
 ## 📁 Project Structure
 
 ```
 DocumentReader/
 ├── src/
-│   └── document_reader/
+│   ├── document_reader/        # Core document processing library
+│   │   ├── __init__.py
+│   │   ├── document_processor.py  # Main processor with INDOT support
+│   │   ├── ocr/                # OCR engines (Tesseract, PaddleOCR)
+│   │   ├── vision/             # Vision-language models
+│   │   ├── layout/             # Layout detection
+│   │   └── utils/              # Utilities
+│   └── api/                    # FastAPI REST API layer
 │       ├── __init__.py
-│       ├── document_processor.py      # Main processing pipeline
-│       ├── ocr/
-│       │   ├── tesseract_reader.py    # Tesseract OCR wrapper
-│       │   └── paddle_reader.py       # PaddleOCR wrapper
-│       ├── vision/
-│       │   └── vl_model.py            # Vision-language models
-│       ├── layout/
-│       │   └── detector.py            # Layout detection
-│       └── utils/
-│           ├── file_utils.py          # File operations
-│           └── image_utils.py         # Image preprocessing
-├── scripts/
-│   ├── process_documents.py           # General document processing
-│   └── process_engineering_plans.py   # Engineering-specific processing
-├── data/
-│   ├── input/                         # Input documents
-│   ├── output/                        # Processing results
-│   ├── models/                        # Model weights
-│   └── samples/                       # Sample documents
-├── tests/                             # Unit tests
-├── requirements.txt                   # Python dependencies
-├── setup.py                           # Package installation
-├── config.yaml                        # Configuration file
-└── README.md                          # This file
+│       └── main.py             # API endpoints
+├── web-ui/                     # React web interface
+│   ├── src/
+│   ├── public/
+│   ├── package.json
+│   └── vite.config.ts
+├── desktop-gui/                # PyQt5 desktop application
+│   ├── __init__.py
+│   └── main.py
+├── scripts/                    # Processing scripts
+├── tests/                      # Unit and integration tests
+├── .github/
+│   ├── workflows/              # GitHub Actions
+│   └── scripts/                # Automation scripts
+├── pyproject.toml              # Modern Python packaging
+├── requirements.txt
+└── README.md
 ```
 
-## 🚀 Installation
+## 🚀 Quick Start
 
 ### Prerequisites
 - Python 3.8 or higher
 - Tesseract OCR (for Tesseract engine)
 - Poppler (for PDF processing)
+- Node.js 18+ (for web UI)
 
-#### Install System Dependencies
+### Installation
+
+#### 1. Install System Dependencies
 
 **Ubuntu/Debian:**
 ```bash
@@ -88,75 +101,80 @@ sudo apt-get install tesseract-ocr poppler-utils
 brew install tesseract poppler
 ```
 
-**Windows:**
-- Download Tesseract from: https://github.com/UB-Mannheim/tesseract/wiki
-- Download Poppler from: https://blog.alivate.com.au/poppler-windows/
-
-### Python Dependencies
+#### 2. Install Python Package
 
 ```bash
 # Clone the repository
 git clone https://github.com/derek-betz/DocumentReader.git
 cd DocumentReader
 
-# Create a virtual environment (recommended)
+# Create virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-# Install dependencies
-pip install -r requirements.txt
+# Install with all features
+pip install -e ".[all]"
 
-# Install the package in development mode
-pip install -e .
+# Or install with specific features
+pip install -e ".[dev,layout]"  # Development + Layout detection
 ```
 
-### Optional: Detectron2 for Advanced Layout Detection
+### Using the REST API
+
+#### Start the API Server
 
 ```bash
-python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
+# Using the command
+roadway-doc-engine-api
+
+# Or directly with uvicorn
+uvicorn src.api.main:app --reload
 ```
 
-## 🔧 Configuration
+The API will be available at `http://localhost:8000`. Visit `http://localhost:8000/docs` for interactive API documentation.
 
-Create a `config.yaml` file or use environment variables for API keys:
+#### Example API Usage
 
-```yaml
-# config.yaml
-ocr:
-  engine: "tesseract"  # or "paddleocr"
-  tesseract:
-    language: "eng"
-    psm: 3
-    enhance_contrast: true
-    denoise: true
-    deskew: true
-  paddleocr:
-    language: "en"
-    use_angle_cls: true
+```python
+import requests
 
-vision:
-  enabled: false
-  model: "gpt-4o"  # or "claude"
-  openai_api_key: "your-api-key-here"
-  anthropic_api_key: "your-api-key-here"
+# Process a roadway plan
+with open('plan.pdf', 'rb') as f:
+    response = requests.post(
+        'http://localhost:8000/process',
+        files={'file': f},
+        params={
+            'ocr_engine': 'tesseract',
+            'identify_sheet_type': True,
+            'extract_measurements': True
+        }
+    )
 
-layout:
-  enabled: true
-  model_type: "layoutparser"
-  confidence_threshold: 0.5
+results = response.json()
+print(f"Sheet Type: {results['results']['indot_sheet_info']['sheet_type']}")
 ```
 
-Or use environment variables:
+### Using the Web UI
+
 ```bash
-export OPENAI_API_KEY="your-openai-key"
-export ANTHROPIC_API_KEY="your-anthropic-key"
+cd web-ui
+npm install
+npm run dev
 ```
 
-## 📖 Usage
+Visit `http://localhost:3000` to access the web interface.
 
-### Basic Usage
+### Using the Desktop GUI
 
-#### Processing a Single Document
+```bash
+# Install PyQt5
+pip install PyQt5
+
+# Run the desktop application
+python desktop-gui/main.py
+```
+
+### Using as a Python Library
 
 ```python
 from document_reader import DocumentProcessor
@@ -164,269 +182,192 @@ from document_reader import DocumentProcessor
 # Initialize processor
 processor = DocumentProcessor(
     ocr_engine="tesseract",
-    use_vision_model=False,
     detect_layout=True
 )
 
-# Process document
-results = processor.process_document("path/to/document.png")
+# Process an engineering plan
+results = processor.process_engineering_plan(
+    "path/to/plan.pdf",
+    extract_measurements=True
+)
+
+# Identify INDOT sheet type
+sheet_info = processor.identify_indot_sheet_headers(results)
+print(f"Sheet Type: {sheet_info['sheet_type']}")
+print(f"Confidence: {sheet_info['confidence']:.2%}")
+print(f"Project Number: {sheet_info['project_number']}")
 
 # Save results
 processor.save_results(results, "output/results.json")
 ```
 
-#### Processing with Vision-Language Model
+## 📖 API Endpoints
 
-```python
-processor = DocumentProcessor(
-    ocr_engine="paddleocr",
-    use_vision_model=True,
-    vision_model="gpt-4o",
-    detect_layout=True,
-    config={"vision": {"openai_api_key": "your-key"}}
-)
+### Core Endpoints
 
-results = processor.process_document("path/to/document.pdf")
-```
+- `GET /` - API information
+- `GET /health` - Health check
+- `POST /process` - Process any document with full options
+- `POST /process/engineering-plan` - Specialized engineering plan processing
+- `POST /identify-sheet-type` - Quick INDOT sheet type identification
 
-### Command-Line Interface
-
-#### Process General Documents
+### Example Request
 
 ```bash
-# Process a single document
-python scripts/process_documents.py input.png -o output/
-
-# Process with PaddleOCR
-python scripts/process_documents.py input.pdf --ocr paddleocr -o output/
-
-# Process with vision model
-python scripts/process_documents.py input.png --vision --vision-model gpt-4o -o output/
-
-# Batch process all files in a directory
-python scripts/process_documents.py input_dir/ --batch -o output/
+curl -X POST "http://localhost:8000/process/engineering-plan" \
+  -F "file=@plan.pdf" \
+  -F "ocr_engine=tesseract"
 ```
 
-#### Process Engineering Plans
+## 🔧 Configuration
+
+### Environment Variables
 
 ```bash
-# Process an engineering plan with all features
-python scripts/process_engineering_plans.py plan.png -o output/engineering/
+# API Keys for vision models (optional)
+export OPENAI_API_KEY="your-openai-key"
+export ANTHROPIC_API_KEY="your-anthropic-key"
 
-# Process with specific OCR engine
-python scripts/process_engineering_plans.py plan.pdf --ocr tesseract
-
-# Disable vision model
-python scripts/process_engineering_plans.py plan.png --no-vision
-
-# Skip measurement extraction
-python scripts/process_engineering_plans.py plan.png --no-measurements
+# API Server Configuration
+export HOST="0.0.0.0"
+export PORT="8000"
 ```
 
-## 🔄 Processing Pipeline
+### Configuration File (config.yaml)
 
-### For Low-Legibility Engineering Scans
+```yaml
+ocr:
+  engine: "tesseract"
+  tesseract:
+    language: "eng"
+    psm: 3
+    enhance_contrast: true
 
-1. **Preprocessing**
-   - Load document (image or PDF)
-   - Convert PDF to images if needed
-   - Enhance contrast and remove noise
-   - Deskew rotated images
+vision:
+  enabled: false
+  model: "gpt-4o"
 
-2. **Layout Detection**
-   - Identify text regions, tables, figures
-   - Extract bounding boxes and region types
-   - Order regions by reading flow
-
-3. **OCR Extraction**
-   - Apply OCR to each region
-   - Extract text with confidence scores
-   - Handle multiple languages if needed
-
-4. **Vision-Language Interpretation** (Optional)
-   - Send image to GPT-4o or Claude
-   - Get semantic understanding
-   - Extract structured information
-
-5. **Engineering-Specific Extraction**
-   - Extract measurements and dimensions
-   - Identify technical annotations
-   - Detect symbols and specifications
-   - Extract metadata (scale, units, etc.)
-
-6. **Output Generation**
-   - Structured JSON with all extracted data
-   - Human-readable summary
-   - Annotated images (optional)
-
-### Example Pipeline Flow
-
-```
-Low-Legibility Engineering Scan
-         ↓
-   Preprocessing
-   (Enhance, Denoise, Deskew)
-         ↓
-   Layout Detection
-   (Identify Regions)
-         ↓
-   Advanced OCR
-   (Tesseract/PaddleOCR)
-         ↓
-   Vision Model (Optional)
-   (GPT-4o/Claude)
-         ↓
-   Data Extraction
-   (Measurements, Annotations)
-         ↓
-   Structured Output
-   (JSON + Summary)
-```
-
-## 📊 Output Format
-
-### JSON Structure
-
-```json
-{
-  "document_path": "path/to/document.png",
-  "ocr_text": "Extracted text content...",
-  "layout_analysis": {
-    "regions": [
-      {
-        "type": "text",
-        "bbox": [x1, y1, x2, y2],
-        "confidence": 0.95
-      }
-    ],
-    "num_regions": 10
-  },
-  "vision_interpretation": {
-    "model": "gpt-4o",
-    "interpretation": "This is a road engineering plan showing..."
-  },
-  "engineering_data": {
-    "measurements": [
-      {"value": "10.5m", "position": [100, 200]}
-    ],
-    "annotations": [...],
-    "symbols": [...]
-  },
-  "extracted_data": {
-    "text_blocks": [...],
-    "tables": [...],
-    "headers": [...]
-  }
-}
+layout:
+  enabled: true
+  confidence_threshold: 0.5
 ```
 
 ## 🧪 Testing
 
 ```bash
 # Run all tests
-pytest tests/
+pytest tests/ -v
+
+# Run specific test suite
+pytest tests/test_indot_identification.py -v
+pytest tests/test_api.py -v
 
 # Run with coverage
 pytest --cov=src tests/
-
-# Run specific test file
-pytest tests/test_ocr.py
-```
-
-## 🔍 Advanced Features
-
-### Custom OCR Configuration
-
-```python
-config = {
-    "tesseract": {
-        "language": "eng+fra",  # Multiple languages
-        "psm": 6,              # Assume uniform block
-        "oem": 3,              # LSTM neural network
-        "enhance_contrast": True,
-        "denoise": True,
-        "deskew": True
-    }
-}
-
-processor = DocumentProcessor(ocr_engine="tesseract", config=config)
-```
-
-### Image Preprocessing
-
-```python
-from document_reader.utils import enhance_image_for_ocr, deskew_image
-
-# Enhance image before processing
-enhanced = enhance_image_for_ocr("input.png", "enhanced.png")
-
-# Deskew rotated images
-deskewed = deskew_image("input.png", "deskewed.png")
-```
-
-### Batch Processing with Progress
-
-```python
-from pathlib import Path
-from document_reader import DocumentProcessor
-
-processor = DocumentProcessor()
-input_dir = Path("data/input")
-output_dir = Path("data/output")
-
-for i, file_path in enumerate(input_dir.glob("*.png")):
-    print(f"Processing {i+1}: {file_path.name}")
-    results = processor.process_document(file_path)
-    processor.save_results(results, output_dir / f"{file_path.stem}.json")
 ```
 
 ## 🛠️ Development
 
-### Code Style
+### Code Quality
 
 ```bash
 # Format code
-black src/ scripts/ tests/
+black src/ tests/ desktop-gui/
 
-# Check style
-flake8 src/ scripts/ tests/
+# Lint
+flake8 src/ tests/ desktop-gui/
 
 # Type checking
 mypy src/
 ```
 
-### Adding New Features
+### Building for Distribution
 
-1. Fork the repository
-2. Create a feature branch
-3. Add your changes with tests
-4. Ensure all tests pass
-5. Submit a pull request
+```bash
+# Build Python package
+python -m build
+
+# Build web UI
+cd web-ui && npm run build
+```
+
+## 📊 INDOT Sheet Types Supported
+
+The system can identify the following INDOT standard sheet types:
+
+- **Title Sheet (TS)**: Project overview and index
+- **General Notes (GN)**: Project-wide notes and specifications  
+- **Plan and Profile (PP)**: Horizontal and vertical alignment
+- **Cross-Sections (XS)**: Typical and detailed cross-sections
+- **Detail Sheets (DT)**: Construction details
+- **Traffic Control Plan (TCP)**: Temporary traffic control
+- **Signing and Pavement Markings (SPM)**: Sign and marking plans
+- **Drainage (DR)**: Drainage structures and details
+- **Utility (UT)**: Utility relocations and coordination
+
+## 🤝 Integration with Other Tools
+
+The REST API layer enables integration with other roadway engineering tools:
+
+```python
+# Example: Integrate with quantity takeoff system
+import requests
+
+# Process plans and extract data
+response = requests.post(
+    'http://roadway-doc-engine:8000/process/engineering-plan',
+    files={'file': open('plan.pdf', 'rb')}
+)
+
+# Use extracted measurements in your tool
+measurements = response.json()['results']['engineering_data']['measurements']
+# ... process measurements for quantity takeoff
+```
+
+## 🔄 Automated Model Updates
+
+The system includes a weekly GitHub Action that:
+1. Checks PyPI for new versions of ML dependencies
+2. Checks Hugging Face for model updates
+3. Creates GitHub issues when updates are available
+4. Provides upgrade recommendations
+
+Manual trigger:
+```bash
+# Go to Actions tab in GitHub
+# Select "Weekly ML Model Update Check"
+# Click "Run workflow"
+```
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## 📧 Contact
-
-For questions or support, please open an issue on GitHub.
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
 - Tesseract OCR project
-- PaddleOCR team
+- PaddleOCR team  
 - OpenAI and Anthropic for vision-language models
 - LayoutParser project
-- Detectron2 framework
+- INDOT for roadway engineering standards
 
-## 📚 References
+## 📧 Support
 
-- [Tesseract OCR Documentation](https://github.com/tesseract-ocr/tesseract)
-- [PaddleOCR Documentation](https://github.com/PaddlePaddle/PaddleOCR)
-- [LayoutParser Paper](https://arxiv.org/abs/2103.15348)
-- [GPT-4 Vision Documentation](https://platform.openai.com/docs/guides/vision)
-- [Claude Vision Documentation](https://docs.anthropic.com/claude/docs)
+For questions or issues:
+- Open an issue on GitHub
+- Check the [documentation](ARCHITECTURE.md)
+- Review [QUICKSTART.md](QUICKSTART.md)
+
+## 🚀 Future Enhancements
+
+- [ ] Support for more state DOT standards (TDOT, ODOT, etc.)
+- [ ] Advanced table extraction from quantity sheets
+- [ ] CAD file format support (DWG, DXF)
+- [ ] Batch processing improvements
+- [ ] Real-time streaming API
+- [ ] Mobile application
+- [ ] Cloud deployment templates (AWS, Azure, GCP)
+
+---
+
+**Built for roadway engineers, by engineers. Making construction document processing intelligent and efficient.**
