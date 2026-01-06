@@ -14,6 +14,11 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 import uvicorn
 
+import sys
+from pathlib import Path
+# Add src to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from document_reader import DocumentProcessor
 
 # Configure logging
