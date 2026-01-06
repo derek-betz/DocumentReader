@@ -6,6 +6,7 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 import json
+import re
 
 from .ocr.tesseract_reader import TesseractOCR
 from .ocr.paddle_reader import PaddleOCRReader
@@ -188,8 +189,6 @@ class DocumentProcessor:
     
     def _extract_measurements(self, results: Dict) -> List[Dict]:
         """Extract measurements and dimensions from engineering documents."""
-        import re
-        
         measurements = []
         text = results.get("ocr_text", "")
         

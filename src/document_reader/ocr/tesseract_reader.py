@@ -185,7 +185,6 @@ class TesseractOCR:
                 
                 # Rotate image if skew is significant
                 if abs(median_angle) > 0.5:
-                    from PIL import Image
                     return image.rotate(median_angle, expand=True, fillcolor='white')
             
             return image

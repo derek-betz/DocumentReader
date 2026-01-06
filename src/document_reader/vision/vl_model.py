@@ -120,8 +120,8 @@ class VisionLanguageModel:
                     "error": "OpenAI client not initialized. Provide API key in config."
                 }
             
-            # Call GPT-4o API
-            response = self.client.ChatCompletion.create(
+            # Call GPT-4o API (using OpenAI v1.x syntax)
+            response = self.client.chat.completions.create(
                 model=self.model_name,
                 messages=[
                     {
@@ -140,12 +140,25 @@ class VisionLanguageModel:
                 max_tokens=2000
             )
             
+            # Check if response has choices
+            if not response.choices or len(response.choices) == 0:
+                return {"error": "No response from GPT-4o"}
+            
             interpretation = response.choices[0].message.content
+            
+            # Get usage info
+            usage = {}
+            if hasattr(response, 'usage') and response.usage:
+                usage = {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens
+                }
             
             return {
                 "model": self.model_name,
                 "interpretation": interpretation,
-                "usage": response.usage._asdict() if hasattr(response, 'usage') else {}
+                "usage": usage
             }
             
         except Exception as e:

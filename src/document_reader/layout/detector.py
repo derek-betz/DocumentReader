@@ -113,10 +113,13 @@ class LayoutDetector:
             # Convert to dictionary format
             regions = []
             for block in layout:
+                # Safely extract coordinates
+                coords = block.coordinates
+                bbox = [coords[0], coords[1], coords[2], coords[3]] if len(coords) >= 4 else [0, 0, 0, 0]
+                
                 regions.append({
                     "type": block.type,
-                    "bbox": [block.coordinates[0], block.coordinates[1], 
-                            block.coordinates[2], block.coordinates[3]],
+                    "bbox": bbox,
                     "confidence": block.score,
                     "text": getattr(block, 'text', None)
                 })
