@@ -1,0 +1,66 @@
+# Default configuration for Document AI Agent
+
+# OCR Configuration
+ocr:
+  engine: "tesseract"  # Options: tesseract, paddleocr
+  
+  tesseract:
+    language: "eng"
+    psm: 3  # Page segmentation mode (3 = automatic)
+    oem: 3  # OCR Engine mode (3 = LSTM neural net)
+    enhance_contrast: true
+    denoise: true
+    deskew: true
+    tesseract_config: ""  # Additional Tesseract config string
+  
+  paddleocr:
+    language: "en"
+    use_angle_cls: true
+    use_gpu: false
+
+# Vision-Language Model Configuration
+vision:
+  enabled: false
+  model: "gpt-4o"  # Options: gpt-4o, claude
+  openai_api_key: ""  # Set via environment variable OPENAI_API_KEY
+  anthropic_api_key: ""  # Set via environment variable ANTHROPIC_API_KEY
+
+# Layout Detection Configuration
+layout:
+  enabled: true
+  model_type: "basic_opencv"  # Options: detectron2, layoutparser, basic_opencv
+  confidence_threshold: 0.5
+  model_name: "lp://PubLayNet/mask_rcnn_X_101_32x8d_FPN_3x/config"
+
+# Processing Configuration
+processing:
+  # PDF conversion settings
+  pdf:
+    dpi: 300
+    format: "PNG"
+  
+  # Output settings
+  output:
+    save_intermediate: false
+    visualize_layout: false
+    generate_summary: true
+  
+  # Batch processing
+  batch:
+    parallel: false
+    max_workers: 4
+
+# Engineering-specific settings
+engineering:
+  extract_measurements: true
+  extract_annotations: true
+  measurement_patterns:
+    - '\d+\.?\d*\s*(?:mm|cm|m|km|in|ft|yd)'
+    - '\d+\'\d+"'
+    - '\d+\.?\d*\s*x\s*\d+\.?\d*'
+
+# Logging Configuration
+logging:
+  level: "INFO"  # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: ""  # Leave empty to log to console only
