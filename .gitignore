@@ -82,3 +82,27 @@ temp/
 .env
 .env.local
 secrets.yaml
+
+# Node.js / React (web-ui)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+web-ui/dist/
+web-ui/build/
+web-ui/.vite/
+.pnpm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Desktop GUI
+desktop-gui/*.pyc
+desktop-gui/__pycache__/
+
+# API temporary uploads
+uploads/
+temp_uploads/
+
+# Model update check outputs
+model_updates.txt
