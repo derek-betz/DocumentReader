@@ -1,0 +1,76 @@
+name: Weekly ML Model Update Check
+
+on:
+  schedule:
+    # Run every Monday at 9:00 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  check-ml-models:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests packaging beautifulsoup4
+      
+      - name: Check for model updates
+        id: check_updates
+        run: |
+          python .github/scripts/check_model_updates.py
+        continue-on-error: true
+      
+      - name: Create issue if updates available
+        if: steps.check_updates.outputs.updates_found == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const updateInfo = fs.readFileSync('model_updates.txt', 'utf8');
+            
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🤖 ML Model Updates Available',
+              labels: ['enhancement', 'ml-models', 'automated'],
+              body: `## Weekly ML Model Update Check
+            
+            New versions of ML models relevant to Roadway-Doc-Engine have been detected:
+            
+            ${updateInfo}
+            
+            ### Recommended Actions:
+            
+            1. **Review the changes** in each model version
+            2. **Test compatibility** with existing code
+            3. **Benchmark performance** against current models
+            4. **Update dependencies** in pyproject.toml if beneficial
+            5. **Update documentation** with new model information
+            
+            ### Models Checked:
+            - LayoutLMv3 (Microsoft)
+            - PaddleOCR
+            - Tesseract OCR
+            - LayoutParser models
+            
+            ---
+            *This issue was automatically created by the Weekly ML Model Update Check workflow.*
+            `
+            });
+            
+            console.log('Created issue:', issue.data.number);
+      
+      - name: Send notification
+        if: steps.check_updates.outputs.updates_found == 'true'
+        run: |
+          echo "::notice::ML model updates detected. An issue has been created for review."

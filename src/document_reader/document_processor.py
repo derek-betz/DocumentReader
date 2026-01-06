@@ -224,6 +224,158 @@ class DocumentProcessor:
         
         return annotations
     
+    def identify_indot_sheet_headers(self, results: Dict) -> Dict:
+        """
+        Identify INDOT-standard sheet headers from roadway construction plans.
+        
+        INDOT (Indiana Department of Transportation) standard sheet types include:
+        - Title Sheet (TS): Project overview and index
+        - General Notes (GN): Project-wide notes and specifications
+        - Plan and Profile (PP): Horizontal and vertical alignment
+        - Cross-Sections (XS): Typical and detailed cross-sections
+        - Detail Sheets (DT): Construction details
+        - Traffic Control Plan (TCP): Temporary traffic control
+        - Signing and Pavement Markings (SPM): Sign and marking plans
+        - Drainage (DR): Drainage structures and details
+        - Utility (UT): Utility relocations and coordination
+        
+        Args:
+            results: Document processing results containing OCR text
+        
+        Returns:
+            Dictionary with identified sheet information
+        """
+        sheet_info = {
+            "sheet_type": None,
+            "sheet_number": None,
+            "project_number": None,
+            "sheet_title": None,
+            "confidence": 0.0,
+            "identified_headers": []
+        }
+        
+        text = results.get("ocr_text", "")
+        if not isinstance(text, str):
+            return sheet_info
+        
+        text_upper = text.upper()
+        
+        # INDOT sheet type patterns
+        sheet_patterns = {
+            "Title Sheet": [
+                r"TITLE\s+SHEET",
+                r"T\.S\.",
+                r"TS\s*[-]?\s*\d*",
+                r"PROJECT\s+INDEX"
+            ],
+            "General Notes": [
+                r"GENERAL\s+NOTES",
+                r"G\.N\.",
+                r"GN\s*[-]?\s*\d*",
+                r"STANDARD\s+NOTES"
+            ],
+            "Plan and Profile": [
+                r"PLAN\s+AND\s+PROFILE",
+                r"PLAN\s*[&/]\s*PROFILE",
+                r"P\.P\.",
+                r"PP\s*[-]?\s*\d*"
+            ],
+            "Cross-Section": [
+                r"CROSS\s*[-]?\s*SECTION",
+                r"TYPICAL\s+SECTION",
+                r"X\.S\.",
+                r"XS\s*[-]?\s*\d*"
+            ],
+            "Detail Sheet": [
+                r"DETAIL\s+SHEET",
+                r"CONSTRUCTION\s+DETAILS",
+                r"D\.T\.",
+                r"DT\s*[-]?\s*\d*"
+            ],
+            "Traffic Control Plan": [
+                r"TRAFFIC\s+CONTROL\s+PLAN",
+                r"MAINTENANCE\s+OF\s+TRAFFIC",
+                r"T\.C\.P\.",
+                r"TCP\s*[-]?\s*\d*",
+                r"MOT"
+            ],
+            "Signing and Pavement Markings": [
+                r"SIGNING\s+AND\s+PAVEMENT\s+MARKING",
+                r"SIGNS?\s+AND\s+MARK",
+                r"S\.P\.M\.",
+                r"SPM\s*[-]?\s*\d*"
+            ],
+            "Drainage": [
+                r"DRAINAGE\s+PLAN",
+                r"STORM\s+SEWER",
+                r"D\.R\.",
+                r"DR\s*[-]?\s*\d*"
+            ],
+            "Utility": [
+                r"UTILITY\s+PLAN",
+                r"UTILITY\s+COORDINATION",
+                r"U\.T\.",
+                r"UT\s*[-]?\s*\d*"
+            ]
+        }
+        
+        # Search for sheet type
+        max_confidence = 0.0
+        for sheet_type, patterns in sheet_patterns.items():
+            matches = 0
+            found_patterns = []
+            for pattern in patterns:
+                if re.search(pattern, text_upper):
+                    matches += 1
+                    found_patterns.append(pattern)
+            
+            if matches > 0:
+                confidence = min(matches / len(patterns), 1.0)
+                if confidence > max_confidence:
+                    max_confidence = confidence
+                    sheet_info["sheet_type"] = sheet_type
+                    sheet_info["confidence"] = confidence
+                    sheet_info["identified_headers"] = found_patterns
+        
+        # Extract sheet number (common formats: "Sheet 1 of 50", "SH. 10", etc.)
+        sheet_number_patterns = [
+            r"SHEET\s+(\d+)\s+OF\s+(\d+)",
+            r"SH\.\s*(\d+)",
+            r"SHEET\s+(?:NO\.\s*)?(\d+)"
+        ]
+        
+        for pattern in sheet_number_patterns:
+            match = re.search(pattern, text_upper)
+            if match:
+                sheet_info["sheet_number"] = match.group(1)
+                break
+        
+        # Extract project number (INDOT format: DES-XXXXXXXX)
+        project_patterns = [
+            r"DES[-\s]*(\d{7,10})",
+            r"PROJECT\s+NO\.?\s*[:.]?\s*([\d-]+)",
+            r"DES\s+NO\.?\s*[:.]?\s*(\d{7,10})"
+        ]
+        
+        for pattern in project_patterns:
+            match = re.search(pattern, text_upper)
+            if match:
+                sheet_info["project_number"] = match.group(1)
+                break
+        
+        # Try to extract sheet title (usually near top of sheet)
+        lines = text.split('\n')[:10]  # Check first 10 lines
+        for line in lines:
+            line_stripped = line.strip()
+            # Look for lines with substantial text that might be titles
+            if 10 < len(line_stripped) < 100 and line_stripped.isupper():
+                # Avoid lines that are just sheet numbers or project numbers
+                if not re.match(r'^(SHEET|SH\.|PROJECT|DES)', line_stripped):
+                    sheet_info["sheet_title"] = line_stripped
+                    break
+        
+        return sheet_info
+    
     def save_results(self, results: Dict, output_path: Union[str, Path]):
         """Save processing results to file."""
         output_path = Path(output_path)
