@@ -10,14 +10,14 @@ __version__ = "0.1.0"
 __author__ = "DocumentReader Team"
 
 from .ocr.tesseract_reader import TesseractOCR
-from .ocr.paddle_reader import PaddleOCR
+from .ocr.paddle_reader import PaddleOCRReader
 from .vision.vl_model import VisionLanguageModel
 from .layout.detector import LayoutDetector
 from .document_processor import DocumentProcessor
 
 __all__ = [
     "TesseractOCR",
-    "PaddleOCR", 
+    "PaddleOCRReader", 
     "VisionLanguageModel",
     "LayoutDetector",
     "DocumentProcessor",
