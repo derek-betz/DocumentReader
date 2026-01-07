@@ -106,3 +106,6 @@ temp_uploads/
 
 # Model update check outputs
 model_updates.txt
+
+# Local tooling (do not commit)
+tools/

@@ -3,7 +3,9 @@ Tesseract OCR implementation for text extraction from documents.
 """
 
 import logging
+import os
 from pathlib import Path
+import shutil
 from typing import Dict, Optional, Union, List
 import subprocess
 
@@ -31,6 +33,32 @@ class TesseractOCR:
         self.enhance_contrast = self.config.get('enhance_contrast', True)
         self.denoise = self.config.get('denoise', True)
         self.deskew = self.config.get('deskew', True)
+
+        # Optional: explicit path to tesseract executable
+        self.tesseract_cmd = (
+            self.config.get("tesseract_cmd")
+            or os.getenv("TESSERACT_CMD")
+            or os.getenv("TESSERACT_PATH")
+        )
+        if not self.tesseract_cmd:
+            resolved = shutil.which("tesseract")
+            if resolved:
+                self.tesseract_cmd = resolved
+            else:
+                # Common per-user install location (winget/UB-Mannheim)
+                local_app_data = os.getenv("LOCALAPPDATA")
+                if local_app_data:
+                    candidate = Path(local_app_data) / "Programs" / "Tesseract-OCR" / "tesseract.exe"
+                    if candidate.exists():
+                        self.tesseract_cmd = str(candidate)
+                if not self.tesseract_cmd:
+                    # Common system-wide install locations
+                    for candidate in [
+                        Path("C:/Program Files/Tesseract-OCR/tesseract.exe"),
+                        Path("C:/Program Files (x86)/Tesseract-OCR/tesseract.exe"),
+                    ]:
+                        if candidate.exists():
+                            self.tesseract_cmd = str(candidate)
         
         logger.info(f"TesseractOCR initialized with language={self.language}, psm={self.psm}")
     
@@ -47,6 +75,14 @@ class TesseractOCR:
         try:
             import pytesseract
             from PIL import Image
+
+            if self.tesseract_cmd:
+                pytesseract.pytesseract.tesseract_cmd = self.tesseract_cmd
+            else:
+                raise RuntimeError(
+                    "tesseract is not installed or it's not accessible. Install Tesseract OCR, or set "
+                    "TESSERACT_CMD to the full path to tesseract.exe."
+                )
             
             image_path = Path(image_path)
             logger.info(f"Extracting text from: {image_path}")
@@ -93,6 +129,14 @@ class TesseractOCR:
         try:
             import pytesseract
             from PIL import Image
+
+            if self.tesseract_cmd:
+                pytesseract.pytesseract.tesseract_cmd = self.tesseract_cmd
+            else:
+                raise RuntimeError(
+                    "tesseract is not installed or it's not accessible. Install Tesseract OCR, or set "
+                    "TESSERACT_CMD to the full path to tesseract.exe."
+                )
             
             image_path = Path(image_path)
             image = Image.open(image_path)

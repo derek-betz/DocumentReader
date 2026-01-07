@@ -7,11 +7,13 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 import json
 import re
+import tempfile
 
 from .ocr.tesseract_reader import TesseractOCR
 from .ocr.paddle_reader import PaddleOCRReader
 from .vision.vl_model import VisionLanguageModel
 from .layout.detector import LayoutDetector
+from .utils.file_utils import is_pdf_file, pdf_to_images
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -87,34 +89,69 @@ class DocumentProcessor:
         if not document_path.exists():
             raise FileNotFoundError(f"Document not found: {document_path}")
         
-        results = {
-            "document_path": str(document_path),
+        if is_pdf_file(document_path):
+            pdf_config = self.config.get("pdf") or self.config.get("processing", {}).get("pdf", {})
+            dpi = int(pdf_config.get("dpi", 300))
+            poppler_path = pdf_config.get("poppler_path")
+            with tempfile.TemporaryDirectory(prefix="document_reader_pdf_") as temp_dir:
+                page_images = pdf_to_images(
+                    document_path,
+                    output_dir=temp_dir,
+                    dpi=dpi,
+                    poppler_path=poppler_path,
+                )
+                return self._process_image_pages(document_path, page_images)
+
+        return self._process_image_pages(document_path, [document_path])
+
+    def _process_image_pages(self, original_path: Path, image_paths: List[Path]) -> Dict:
+        """Process one or more image pages and aggregate results."""
+        results: Dict = {
+            "document_path": str(original_path),
             "ocr_text": None,
             "layout_analysis": None,
             "vision_interpretation": None,
-            "extracted_data": {}
+            "extracted_data": {},
+            "pages": [],
         }
-        
-        # Step 1: Layout detection (if enabled)
-        if self.layout_detector:
-            logger.info("Performing layout detection...")
-            results["layout_analysis"] = self.layout_detector.detect_layout(document_path)
-        
-        # Step 2: OCR extraction
-        logger.info("Performing OCR extraction...")
-        results["ocr_text"] = self.ocr.extract_text(document_path)
-        
-        # Step 3: Vision-language model interpretation (if enabled)
-        if self.vision_model:
-            logger.info("Using vision-language model for interpretation...")
-            results["vision_interpretation"] = self.vision_model.interpret_document(
-                document_path,
-                context=results.get("ocr_text")
-            )
-        
-        # Step 4: Extract structured data
+
+        ocr_text_parts: List[str] = []
+
+        for page_index, image_path in enumerate(image_paths, start=1):
+            page_result: Dict = {
+                "page": page_index,
+                "image_path": str(image_path),
+                "ocr_text": None,
+                "layout_analysis": None,
+                "vision_interpretation": None,
+            }
+
+            if self.layout_detector:
+                logger.info(f"Performing layout detection (page {page_index})...")
+                page_result["layout_analysis"] = self.layout_detector.detect_layout(image_path)
+
+            logger.info(f"Performing OCR extraction (page {page_index})...")
+            page_result["ocr_text"] = self.ocr.extract_text(image_path)
+            if isinstance(page_result["ocr_text"], str) and page_result["ocr_text"].strip():
+                ocr_text_parts.append(page_result["ocr_text"].strip())
+
+            if self.vision_model:
+                logger.info(f"Using vision-language model for interpretation (page {page_index})...")
+                page_result["vision_interpretation"] = self.vision_model.interpret_document(
+                    image_path,
+                    context=page_result.get("ocr_text"),
+                )
+
+            results["pages"].append(page_result)
+
+        # Backwards compatible top-level fields
+        if results["pages"]:
+            results["layout_analysis"] = results["pages"][0].get("layout_analysis")
+            results["vision_interpretation"] = results["pages"][0].get("vision_interpretation")
+        results["ocr_text"] = "\n\n".join(ocr_text_parts) if ocr_text_parts else ""
+
         results["extracted_data"] = self._extract_structured_data(results)
-        
+
         logger.info("Document processing complete")
         return results
     
