@@ -38,10 +38,28 @@ processing:
   pdf:
     dpi: 300
     format: "PNG"
+
+  # Preprocessing for difficult scans
+  preprocess:
+    enabled: true
+    enhance: true
+    denoise: true
+    deskew: true
+    binarize: false
+
+  # Quality analysis thresholds
+  quality:
+    blur_threshold: 100.0
+    contrast_threshold: 25.0
+    skew_threshold: 1.5
+    brightness_min: 50.0
+    brightness_max: 200.0
+    hough_threshold: 200
   
   # Output settings
   output:
     save_intermediate: false
+    artifacts_dir: "output/document_expert"
     visualize_layout: false
     generate_summary: true
   
@@ -58,6 +76,15 @@ engineering:
     - '\d+\.?\d*\s*(?:mm|cm|m|km|in|ft|yd)'
     - '\d+\'\d+"'
     - '\d+\.?\d*\s*x\s*\d+\.?\d*'
+
+# Generalized extractors
+extractors:
+  tables:
+    line_scale: 40
+    min_table_area_ratio: 0.01
+  key_values:
+    max_key_length: 48
+    max_value_length: 200
 
 # Logging Configuration
 logging:

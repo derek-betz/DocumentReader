@@ -102,6 +102,21 @@ Run it:
 python test_processing.py
 ```
 
+#### Document Expert (Generalized Pipeline)
+
+```python
+from document_reader import DocumentExpert
+
+expert = DocumentExpert(ocr_engine="tesseract", detect_layout=True)
+results = expert.analyze(
+    "path/to/any_document.pdf",
+    tasks=["classify", "quality", "tables", "measurements", "key_values"]
+)
+
+print(results.document_type.type)
+print(results.ocr_text[:200])
+```
+
 ### Option B: REST API (Recommended for Integration)
 
 #### Start the API Server

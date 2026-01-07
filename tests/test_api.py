@@ -10,6 +10,7 @@ import json
 import io
 
 from src.api.main import app
+from document_reader.expert.contracts import DocumentResult
 
 
 @pytest.fixture
@@ -52,6 +53,16 @@ def mock_processor():
         }
         
         yield processor_instance
+
+
+@pytest.fixture
+def mock_expert():
+    """Create a mock DocumentExpert."""
+    with patch('src.api.main.DocumentExpert') as mock:
+        expert_instance = MagicMock()
+        mock.return_value = expert_instance
+        expert_instance.analyze.return_value = DocumentResult(document_path="test.pdf")
+        yield expert_instance
 
 
 class TestAPIEndpoints:
@@ -171,6 +182,21 @@ class TestAPIEndpoints:
         assert response.status_code == 200
         data = response.json()
         assert data['status'] == 'success'
+
+    def test_process_expert_endpoint(self, client, mock_expert):
+        """Test the document expert processing endpoint."""
+        fake_file = io.BytesIO(b"fake pdf content")
+
+        response = client.post(
+            "/process/expert",
+            files={"file": ("test.pdf", fake_file, "application/pdf")},
+            params={"tasks": "classify"}
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "success"
+        assert data["results"]["document_path"] == "test.pdf"
 
 
 class TestAPIErrorHandling:

@@ -201,6 +201,29 @@ print(f"Project Number: {sheet_info['project_number']}")
 processor.save_results(results, "output/results.json")
 ```
 
+### Using the Document Expert Pipeline
+
+```python
+from document_reader import DocumentExpert
+
+expert = DocumentExpert(
+    ocr_engine="tesseract",
+    detect_layout=True
+)
+
+results = expert.analyze(
+    "path/to/document.pdf",
+    tasks=["classify", "quality", "tables", "measurements", "key_values"]
+)
+
+print(results.document_type.type)
+print(results.ocr_text[:200])
+```
+
+```bash
+process-expert path/to/document.pdf --tasks classify,quality,tables
+```
+
 ## 📖 API Endpoints
 
 ### Core Endpoints
@@ -210,6 +233,7 @@ processor.save_results(results, "output/results.json")
 - `POST /process` - Process any document with full options
 - `POST /process/engineering-plan` - Specialized engineering plan processing
 - `POST /identify-sheet-type` - Quick INDOT sheet type identification
+- `POST /process/expert` - Generalized expert pipeline with structured output
 
 ### Example Request
 

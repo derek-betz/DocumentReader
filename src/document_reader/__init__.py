@@ -14,6 +14,7 @@ from .ocr.paddle_reader import PaddleOCRReader
 from .vision.vl_model import VisionLanguageModel
 from .layout.detector import LayoutDetector
 from .document_processor import DocumentProcessor
+from .expert.pipeline import DocumentExpert
 
 __all__ = [
     "TesseractOCR",
@@ -21,4 +22,5 @@ __all__ = [
     "VisionLanguageModel",
     "LayoutDetector",
     "DocumentProcessor",
+    "DocumentExpert",
 ]

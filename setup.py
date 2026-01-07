@@ -81,6 +81,7 @@ setup(
         "console_scripts": [
             "process-documents=scripts.process_documents:main",
             "process-engineering-plans=scripts.process_engineering_plans:main",
+            "process-expert=scripts.process_expert:main",
         ],
     },
     include_package_data=True,

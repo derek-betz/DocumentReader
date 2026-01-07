@@ -96,6 +96,7 @@ Documentation = "https://github.com/derek-betz/DocumentReader#readme"
 process-documents = "scripts.process_documents:main"
 process-engineering-plans = "scripts.process_engineering_plans:main"
 roadway-doc-engine-api = "src.api.main:start_server"
+process-expert = "scripts.process_expert:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
