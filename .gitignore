@@ -64,6 +64,7 @@ data/output/*
 !data/output/.gitkeep
 data/models/*
 !data/models/.gitkeep
+output/
 *.log
 
 # Temporary files
