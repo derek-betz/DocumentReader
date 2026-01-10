@@ -22,7 +22,7 @@ from .contracts import (
 from .extractors import extract_key_values, extract_measurements
 from .preprocess import preprocess_image
 from .quality import compute_quality
-from .tables import detect_tables
+from .tables import extract_tables
 
 
 class DocumentExpert:
@@ -135,10 +135,18 @@ class DocumentExpert:
 
                 page_tables: List[TableRegion] = []
                 if "tables" in task_set:
-                    page_tables = detect_tables(
+                    ocr_data = None
+                    table_config = self.extractor_config.get("tables", {})
+                    if bool(table_config.get("extract_content", True)):
+                        try:
+                            ocr_data = self.ocr.extract_data(processed_path)
+                        except Exception as exc:
+                            page_warnings.append(f"table_ocr_data_failed:{exc}")
+                    page_tables = extract_tables(
                         processed_path,
                         page_number=page_number,
-                        config=self.extractor_config.get("tables", {}),
+                        config=table_config,
+                        ocr_data=ocr_data,
                     )
                     tables.extend(page_tables)
 

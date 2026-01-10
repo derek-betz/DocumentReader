@@ -45,6 +45,7 @@ class TestDocumentProcessor:
 
         ocr_instance = Mock()
         ocr_instance.extract_text.side_effect = ["page one", "page two"]
+        ocr_instance.extract_data.return_value = {}
 
         layout_instance = Mock()
         layout_instance.detect_layout.return_value = {"regions": [], "num_regions": 0}

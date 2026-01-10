@@ -69,8 +69,31 @@ This contract defines how other repos/agents should call the generalized documen
 }
 ```
 
+Example table entry (when table extraction is enabled):
+
+```json
+{
+  "page_number": 1,
+  "bbox": {"x1": 120, "y1": 400, "x2": 920, "y2": 620},
+  "confidence": null,
+  "method": "opencv_lines",
+  "row_count": 3,
+  "column_count": 4,
+  "grid": {"rows": [400, 460, 540, 620], "columns": [120, 320, 520, 720, 920]},
+  "rows": [
+    ["ITEM", "UNIT", "QTY", "NOTES"],
+    ["110-01001", "LS", "1", ""],
+    ["201-01015", "LS", "1", ""]
+  ],
+  "cells": [
+    {"row": 0, "col": 0, "text": "ITEM", "bbox": {"x1": 122, "y1": 402, "x2": 318, "y2": 458}, "confidence": 87.0}
+  ]
+}
+```
+
 ## Notes
 
 - `summary` requires a vision model; otherwise it is `null` and a warning is added.
 - `tables`, `key_values`, and `measurements` are aggregated across pages.
+- Table entries include optional `row_count`, `column_count`, `grid`, `cells`, and `rows` when table content extraction is enabled.
 - If `processing.output.save_intermediate=true`, intermediate artifacts are written under `processing.output.artifacts_dir` (default `output/document_expert`).

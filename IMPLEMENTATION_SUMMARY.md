@@ -282,11 +282,10 @@ python desktop-gui/main.py
 
 Potential improvements identified:
 1. Support for additional state DOT standards (TDOT, ODOT)
-2. Advanced table extraction from quantity sheets
-3. CAD file format support (DWG, DXF)
-4. Mobile application
-5. Cloud deployment templates
-6. Real-time streaming API
+2. CAD file format support (DWG, DXF)
+3. Mobile application
+4. Cloud deployment templates
+5. Real-time streaming API
 
 ## Conclusion
 

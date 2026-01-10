@@ -30,11 +30,26 @@ class LayoutRegion(BaseModel):
     text: Optional[str] = Field(None, description="Region text if available")
 
 
+class TableCell(BaseModel):
+    row: int = Field(..., description="Row index (0-based)")
+    col: int = Field(..., description="Column index (0-based)")
+    text: str = Field(..., description="Cell text")
+    bbox: BoundingBox = Field(..., description="Cell bounding box")
+    confidence: Optional[float] = Field(None, description="OCR confidence for the cell")
+
+
 class TableRegion(BaseModel):
     page_number: int = Field(..., description="Page index (1-based)")
     bbox: BoundingBox = Field(..., description="Table bounding box")
     confidence: Optional[float] = Field(None, description="Detection confidence")
     method: str = Field(..., description="Detection method")
+    row_count: Optional[int] = Field(None, description="Detected row count")
+    column_count: Optional[int] = Field(None, description="Detected column count")
+    grid: Optional[Dict[str, List[int]]] = Field(
+        None, description="Grid line positions (page coordinates)"
+    )
+    cells: List[TableCell] = Field(default_factory=list, description="Extracted table cells")
+    rows: List[List[str]] = Field(default_factory=list, description="Row-major cell text")
 
 
 class Measurement(BaseModel):

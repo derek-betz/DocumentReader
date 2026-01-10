@@ -80,8 +80,19 @@ engineering:
 # Generalized extractors
 extractors:
   tables:
+    enabled: true
+    extract_content: true
     line_scale: 40
     min_table_area_ratio: 0.01
+    min_line_length_ratio: 0.4
+    line_merge_tolerance: 6
+    min_cell_size: 12
+    cell_padding: 2
+    min_words_in_table: 5
+    min_filled_cells: 1
+    binarize_method: "otsu"
+    adaptive_block_size: 21
+    adaptive_c: 5
   key_values:
     max_key_length: 48
     max_value_length: 200

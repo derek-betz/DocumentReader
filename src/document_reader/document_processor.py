@@ -12,6 +12,7 @@ import tempfile
 from .ocr.tesseract_reader import TesseractOCR
 from .ocr.paddle_reader import PaddleOCRReader
 from .vision.vl_model import VisionLanguageModel
+from .expert.tables import extract_tables
 from .layout.detector import LayoutDetector
 from .utils.file_utils import is_pdf_file, pdf_to_images
 
@@ -124,6 +125,7 @@ class DocumentProcessor:
                 "ocr_text": None,
                 "layout_analysis": None,
                 "vision_interpretation": None,
+                "tables": [],
             }
 
             if self.layout_detector:
@@ -141,6 +143,26 @@ class DocumentProcessor:
                     image_path,
                     context=page_result.get("ocr_text"),
                 )
+
+            table_config = self.config.get("extractors", {}).get("tables", {})
+            if bool(table_config.get("enabled", True)):
+                ocr_data = None
+                if bool(table_config.get("extract_content", True)):
+                    try:
+                        ocr_data = self.ocr.extract_data(image_path)
+                    except Exception as exc:
+                        logger.warning(
+                            "Table OCR data extraction failed (page %s): %s",
+                            page_index,
+                            exc,
+                        )
+                page_tables = extract_tables(
+                    image_path,
+                    page_number=page_index,
+                    config=table_config,
+                    ocr_data=ocr_data,
+                )
+                page_result["tables"] = [table.model_dump() for table in page_tables]
 
             results["pages"].append(page_result)
 
@@ -198,7 +220,11 @@ class DocumentProcessor:
         
         if extract_annotations:
             engineering_data["annotations"] = self._extract_annotations(results)
-        
+
+        tables = (results.get("extracted_data") or {}).get("tables")
+        if tables:
+            engineering_data["tables"] = tables
+
         results["engineering_data"] = engineering_data
         
         return results
@@ -221,6 +247,12 @@ class DocumentProcessor:
                     {"content": block.strip(), "type": "paragraph"}
                     for block in text.split("\n\n") if block.strip()
                 ]
+
+        tables = []
+        for page in results.get("pages", []):
+            for table in page.get("tables", []):
+                tables.append(table)
+        structured_data["tables"] = tables
         
         return structured_data
     

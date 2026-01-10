@@ -144,10 +144,15 @@ class TesseractOCR:
             if self.enhance_contrast or self.denoise or self.deskew:
                 image = self._preprocess_image(image)
             
+            custom_config = f'--oem {self.oem} --psm {self.psm}'
+            if self.config.get('tesseract_config'):
+                custom_config += f" {self.config['tesseract_config']}"
+
             # Get detailed data
             data = pytesseract.image_to_data(
                 image,
                 lang=self.language,
+                config=custom_config,
                 output_type=pytesseract.Output.DICT
             )
             

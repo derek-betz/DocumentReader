@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any, List
 import logging
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, File, UploadFile, HTTPException, BackgroundTasks, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -20,6 +21,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from document_reader import DocumentProcessor
+from document_reader.agent_hub import fetch_knowledge, publish_knowledge, register_agent
 from document_reader.expert import DocumentExpert
 from document_reader.expert.contracts import (
     ExpertProcessingOptions,
@@ -29,6 +31,8 @@ from document_reader.expert.contracts import (
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+load_dotenv()
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -47,6 +51,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def on_startup() -> None:
+    register_agent()
 
 
 # Pydantic models for request/response
@@ -154,6 +163,36 @@ async def health_check():
         version="0.1.0",
         message="Service is operational"
     )
+
+
+@app.get("/agent/info")
+async def agent_info() -> Dict[str, Any]:
+    return {
+        "name": os.getenv("AGENT_NAME", "DocumentReader"),
+        "capabilities": ["document-processing", "ocr", "indot-sheet", "measurements"],
+    }
+
+
+@app.post("/agent/register")
+async def agent_register() -> Dict[str, str]:
+    register_agent()
+    return {"status": "registered"}
+
+
+@app.post("/agent/knowledge/publish")
+async def agent_publish(payload: Dict[str, Any]) -> Dict[str, str]:
+    publish_knowledge(payload)
+    return {"status": "queued"}
+
+
+@app.get("/agent/knowledge/query")
+async def agent_query(
+    source: str | None = None,
+    topic: str | None = None,
+    tag: str | None = None,
+    limit: int = 50,
+) -> List[Dict[str, Any]]:
+    return fetch_knowledge(source=source, topic=topic, tag=tag, limit=limit)
 
 
 @app.post("/process", response_model=ProcessingResponse)
