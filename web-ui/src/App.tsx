@@ -28,7 +28,7 @@ interface ProcessingResult {
   results?: {
     ocr_text?: string;
     indot_sheet_info?: SheetInfo;
-    engineering_data?: any;
+    engineering_data?: unknown;
   };
   error?: string;
 }
